@@ -98,4 +98,9 @@ export class BallotController {
     const tx = await this.appService.setTargetBlockNumber(body.blockNumber);
     return { result: tx };
   }
+
+  @Get('ballot/voting-history/:address')
+  async getVotingHistory(@Param('address') address: string) {
+    return await this.appService.getVotingHistory(address);
+  }
 }

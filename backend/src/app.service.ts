@@ -14,6 +14,7 @@ import { sepolia } from 'viem/chains';
 import { ConfigService } from '@nestjs/config';
 import { privateKeyToAccount } from 'viem/accounts';
 import { VoteUnit } from './dtos/vote.dto';
+import { VoteHistoryResponseDto } from './dtos/voteHistory.dto';
 
 @Injectable()
 export class TokenService {
@@ -262,5 +263,42 @@ export class BallotService {
       functionName: 'setTargetBlockNumber',
       args: [blockNumber],
     });
+  }
+
+  async getVotingHistory(address: string): Promise<VoteHistoryResponseDto> {
+    // Get total voting power spent
+    const votePowerSpent = await this.publicClient.readContract({
+      address: this.getContractAddress(),
+      abi: ballotJson.abi,
+      functionName: 'votePowerSpent',
+      args: [address as Address],
+    });
+
+    // Get remaining voting power
+    const remainingVotePower = await this.getVotingPower(address);
+
+    // Get all proposals to check votes
+    const proposals = await this.getProposals();
+    const votes = [];
+
+    // For each proposal, check if the address has votes
+    for (let i = 0; i < proposals.length; i++) {
+      const proposal = proposals[i];
+      // We consider a vote cast if the proposal has votes and the total spent power is > 0
+      if (proposal.voteCount !== '0' && votePowerSpent > 0) {
+        votes.push({
+          proposalName: proposal.name,
+          proposalId: i,
+          voteCount: proposal.voteCount,
+        });
+      }
+    }
+
+    return {
+      voter: address,
+      votePowerSpent: votePowerSpent.toString(),
+      remainingVotePower: remainingVotePower,
+      votes: votes,
+    };
   }
 }

@@ -2,6 +2,8 @@ import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { TokenService, BallotService } from './app.service';
 import { MintTokenDto } from './dtos/mintToken.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { VoteDto } from './dtos/vote.dto';
+import { SetTargetBlockDto } from './dtos/setTargetBlock.dto';
 
 @ApiTags('Token')
 @Controller()
@@ -42,6 +44,11 @@ export class TokenController {
   async mintTokens(@Body() body: MintTokenDto) {
     return { result: await this.appService.mintTokens(body.amount) };
   }
+
+  @Post('self-delegate')
+  async selfDelegate() {
+    return { result: await this.appService.selfDelegate() };
+  }
 }
 
 @ApiTags('Ballot')
@@ -62,5 +69,33 @@ export class BallotController {
   @Get('ballot/winner')
   async getWinningProposal() {
     return await this.appService.getWinningProposal();
+  }
+
+  @Get('ballot/target-block')
+  async getTargetBlockNumber() {
+    const blockNumber = await this.appService.getTargetBlockNumber();
+    return { result: blockNumber };
+  }
+
+  @Get('ballot/voting-power/:address')
+  async getVotingPower(@Param('address') address: string) {
+    const votingPower = await this.appService.getVotingPower(address);
+    return { result: votingPower };
+  }
+
+  @Post('ballot/vote')
+  async vote(@Body() body: VoteDto) {
+    const tx = await this.appService.vote(
+      body.proposalId,
+      body.amount,
+      body.unit,
+    );
+    return { result: tx };
+  }
+
+  @Post('ballot/target-block')
+  async setTargetBlockNumber(@Body() body: SetTargetBlockDto) {
+    const tx = await this.appService.setTargetBlockNumber(body.blockNumber);
+    return { result: tx };
   }
 }

@@ -12,6 +12,7 @@ import {
 import { sepolia } from 'viem/chains';
 import { ConfigService } from '@nestjs/config';
 import { privateKeyToAccount } from 'viem/accounts';
+import { VoteUnit } from './dtos/vote.dto';
 
 @Injectable()
 export class TokenService {
@@ -103,6 +104,16 @@ export class TokenService {
 
     return `Transaction hash: ${tx}`;
   }
+
+  async selfDelegate(): Promise<string> {
+    const tx = await this.walletClient.writeContract({
+      address: this.getContractAddress(),
+      abi: tokenJson.abi,
+      functionName: 'delegate',
+      args: [this.walletClient.account.address],
+    });
+    return `Transaction hash: ${tx}`;
+  }
 }
 
 @Injectable()
@@ -190,5 +201,65 @@ export class BallotService {
       name: name,
       voteCount: winningProposal[1].toString(),
     };
+  }
+
+  async getTargetBlockNumber(): Promise<number> {
+    const targetBlock = await this.publicClient.readContract({
+      address: this.getContractAddress(),
+      abi: ballotJson.abi,
+      functionName: 'targetBlockNumber',
+    });
+    return Number(targetBlock);
+  }
+
+  async getVotingPower(address: string): Promise<string> {
+    address = `0xe6DdDcbb2848983D9cAaB715611849E579759CB0` as Address;
+    console.log(`Checking voting power for address: ${address}`);
+    const votingPower = await this.publicClient.readContract({
+      address: this.getContractAddress(),
+      abi: ballotJson.abi,
+      functionName: 'getVotingPower',
+      args: [address as Address],
+    });
+    console.log(`Raw voting power result: ${votingPower}`);
+    return votingPower.toString();
+  }
+
+  async vote(
+    proposalId: number,
+    amount: number,
+    unit: VoteUnit,
+  ): Promise<string> {
+    let parsedAmount: bigint;
+
+    switch (unit) {
+      case VoteUnit.ETH:
+        parsedAmount = parseEther(amount.toString());
+        break;
+      case VoteUnit.GWEI:
+        parsedAmount = BigInt(amount * 1e9); // Convert GWEI to WEI
+        break;
+      case VoteUnit.WEI:
+        parsedAmount = BigInt(amount);
+        break;
+      default:
+        throw new Error('Invalid unit specified');
+    }
+
+    return await this.walletClient.writeContract({
+      address: this.getContractAddress(),
+      abi: ballotJson.abi,
+      functionName: 'vote',
+      args: [proposalId, parsedAmount],
+    });
+  }
+
+  async setTargetBlockNumber(blockNumber: number): Promise<string> {
+    return await this.walletClient.writeContract({
+      address: this.getContractAddress(),
+      abi: ballotJson.abi,
+      functionName: 'setTargetBlockNumber',
+      args: [blockNumber],
+    });
   }
 }

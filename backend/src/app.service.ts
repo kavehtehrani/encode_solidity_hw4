@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as tokenJson from './assets/MyToken.json';
+import * as ballotJson from './assets/TokenizedBallot.json';
 import {
   createPublicClient,
   http,
@@ -13,7 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import { privateKeyToAccount } from 'viem/accounts';
 
 @Injectable()
-export class AppService {
+export class TokenService {
   publicClient;
   walletClient;
 
@@ -33,10 +34,6 @@ export class AppService {
       chain: sepolia,
       account: account,
     });
-  }
-
-  getHello(): string {
-    return 'Hello World! dawg fdf5';
   }
 
   getContractAddress(): Address {
@@ -77,11 +74,6 @@ export class AppService {
     return `${formatEther(balance as bigint)} ${symbol}`;
   }
 
-  async getTransactionReceipt(hash: string): Promise<string> {
-    const tx = await this.publicClient.getTransactionReceipt({ hash });
-    return `Status: ${tx.status}, Block number: ${tx.blockNumber}`;
-  }
-
   getServerWalletAddress(): string {
     return this.walletClient.account.address;
   }
@@ -110,5 +102,93 @@ export class AppService {
     });
 
     return `Transaction hash: ${tx}`;
+  }
+}
+
+@Injectable()
+export class BallotService {
+  publicClient;
+  walletClient;
+
+  constructor(private configService: ConfigService) {
+    const apiKey = this.configService.get<string>('ALCHEMY_API_KEY');
+    const rpcEndpoint = this.configService.get<string>('ALCHEMY_END_POINT');
+    this.publicClient = createPublicClient({
+      chain: sepolia,
+      transport: http(`${rpcEndpoint}/${apiKey}`),
+    });
+
+    const privateKey = this.configService.get<string>('PRIVATE_KEY');
+    const account = privateKeyToAccount(`0x${privateKey.replace('0x', '')}`);
+    console.log(account);
+    this.walletClient = createWalletClient({
+      transport: http(`${rpcEndpoint}/${apiKey}`),
+      chain: sepolia,
+      account: account,
+    });
+  }
+
+  getContractAddress(): Address {
+    return this.configService.get<string>('BALLOT_ADDRESS') as Address;
+  }
+
+  async getProposals() {
+    const proposalCount = (await this.publicClient.readContract({
+      address: this.getContractAddress(),
+      abi: ballotJson.abi,
+      functionName: 'getProposalsCount',
+    })) as number;
+
+    const proposals = [];
+
+    for (let i = 0; i < proposalCount; i++) {
+      const proposal = await this.publicClient.readContract({
+        address: this.getContractAddress(),
+        abi: ballotJson.abi,
+        functionName: 'proposals',
+        args: [i],
+      });
+
+      // Convert bytes32 name to string and remove null characters
+      const name = Buffer.from(proposal[0].slice(2), 'hex')
+        .toString('utf8')
+        .replace(/\0/g, '');
+
+      proposals.push({
+        name: name,
+        voteCount: proposal[1].toString(),
+      });
+    }
+
+    return proposals;
+  }
+
+  async getWinningProposal() {
+    const [winningProposalId, hasTie] = (await this.publicClient.readContract({
+      address: this.getContractAddress(),
+      abi: ballotJson.abi,
+      functionName: 'winningProposal',
+    })) as [number, boolean];
+
+    if (hasTie) {
+      return { result: 'There is currently a tie' };
+    }
+
+    const winningProposal = await this.publicClient.readContract({
+      address: this.getContractAddress(),
+      abi: ballotJson.abi,
+      functionName: 'proposals',
+      args: [winningProposalId],
+    });
+
+    const name = Buffer.from(winningProposal[0].slice(2), 'hex')
+      .toString('utf8')
+      .replace(/\0/g, '');
+
+    return {
+      proposalId: winningProposalId,
+      name: name,
+      voteCount: winningProposal[1].toString(),
+    };
   }
 }

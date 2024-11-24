@@ -7,10 +7,9 @@ async function bootstrap() {
   app.enableCors();
 
   const config = new DocumentBuilder()
-    .setTitle('API example')
-    .setDescription('The API description')
-    .setVersion('1.0')
-    .addTag('example')
+    .setTitle('Tokenized Ballot')
+    .setDescription('Interface for the Tokenized Ballot')
+    .setVersion('0.1')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

@@ -1,15 +1,12 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { AppService } from './app.service';
+import { TokenService, BallotService } from './app.service';
 import { MintTokenDto } from './dtos/mintToken.dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Token')
 @Controller()
-export class AppController {
-  constructor(private readonly appService: AppService) {}
-
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
+export class TokenController {
+  constructor(private readonly appService: TokenService) {}
 
   @Get('contract-address')
   getContractAddress() {
@@ -31,11 +28,6 @@ export class AppController {
     return { result: await this.appService.getTokenBalance(address) };
   }
 
-  @Get('transaction-receipt')
-  async getTransactionReceipt(@Query('hash') hash: string) {
-    return { result: await this.appService.getTransactionReceipt(hash) };
-  }
-
   @Get('server-wallet-address')
   getServerWalletAddress() {
     return { result: this.appService.getServerWalletAddress() };
@@ -49,5 +41,26 @@ export class AppController {
   @Post('mint-tokens')
   async mintTokens(@Body() body: MintTokenDto) {
     return { result: await this.appService.mintTokens(body.amount) };
+  }
+}
+
+@ApiTags('Ballot')
+@Controller()
+export class BallotController {
+  constructor(private readonly appService: BallotService) {}
+
+  @Get('ballot-address')
+  getContractAddress() {
+    return { result: this.appService.getContractAddress() };
+  }
+
+  @Get('ballot/proposals')
+  async getProposals() {
+    return await this.appService.getProposals();
+  }
+
+  @Get('ballot/winner')
+  async getWinningProposal() {
+    return await this.appService.getWinningProposal();
   }
 }

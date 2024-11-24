@@ -8,6 +8,7 @@ import {
   formatEther,
   createWalletClient,
   parseEther,
+  parseGwei,
 } from 'viem';
 import { sepolia } from 'viem/chains';
 import { ConfigService } from '@nestjs/config';
@@ -237,7 +238,7 @@ export class BallotService {
         parsedAmount = parseEther(amount.toString());
         break;
       case VoteUnit.GWEI:
-        parsedAmount = BigInt(amount * 1e9); // Convert GWEI to WEI
+        parsedAmount = parseGwei(amount.toString());
         break;
       case VoteUnit.WEI:
         parsedAmount = BigInt(amount);

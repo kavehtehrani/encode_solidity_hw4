@@ -48,6 +48,6 @@ export class AppController {
 
   @Post('mint-tokens')
   async mintTokens(@Body() body: MintTokenDto) {
-    return { result: await this.appService.mintTokens(body.address) };
+    return { result: await this.appService.mintTokens(body.amount) };
   }
 }

@@ -5,8 +5,8 @@ import {
   http,
   Address,
   formatEther,
-  TransactionReceipt,
   createWalletClient,
+  parseEther,
 } from 'viem';
 import { sepolia } from 'viem/chains';
 import { ConfigService } from '@nestjs/config';
@@ -93,24 +93,22 @@ export class AppService {
       functionName: 'MINTER_ROLE',
     });
 
-    const minter = await this.publicClient.readContract({
+    return await this.publicClient.readContract({
       address: this.getContractAddress(),
       abi: tokenJson.abi,
       functionName: 'hasRole',
       args: [MINTER_ROLE, address],
     });
-
-    return minter;
   }
 
-  async mintTokens(address: string): Promise<string> {
-    const tx = await this.publicClient.writeContract({
+  async mintTokens(amount: Number): Promise<string> {
+    const tx = await this.walletClient.writeContract({
       address: this.getContractAddress(),
       abi: tokenJson.abi,
       functionName: 'mint',
-      args: [address, 1000],
+      args: [this.walletClient.account.address, parseEther(amount.toString())],
     });
 
-    return `Transaction hash: ${tx.hash}`;
+    return `Transaction hash: ${tx}`;
   }
 }

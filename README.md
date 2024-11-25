@@ -34,3 +34,7 @@ Voting dApp integration guidelines
 ## Backend
 
 ![backend](./images/backend_1.png)
+
+## Note
+
+I have made some extra functionality to sign directly on-chain from user's wallet without storing private keys in the .env file.  

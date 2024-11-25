@@ -1,5 +1,7 @@
 # Encode Solidity Bootcamp
-#### Group #9, HW #4
+#### HW #4
+
+🚧 This is still a work in progress 🚧
 
 ## Scope
 

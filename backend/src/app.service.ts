@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as tokenJson from './assets/MyToken.json';
 import * as ballotJson from './assets/TokenizedBallot.json';
 import {
@@ -15,6 +17,8 @@ import { ConfigService } from '@nestjs/config';
 import { privateKeyToAccount } from 'viem/accounts';
 import { VoteUnit } from './dtos/vote.dto';
 import { VoteHistoryResponseDto } from './dtos/voteHistory.dto';
+import { VoteRecordDto } from './dtos/voteRecord.dto';
+import { VoteRecord } from './entities/vote-record.entity';
 
 @Injectable()
 export class TokenService {
@@ -122,8 +126,14 @@ export class TokenService {
 export class BallotService {
   publicClient;
   walletClient;
+  private recentVotes: VoteRecordDto[] = [];
+  private readonly MAX_STORED_VOTES = 100; // Store last 100 votes
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    @InjectRepository(VoteRecord)
+    private voteRecordRepository: Repository<VoteRecord>,
+  ) {
     const apiKey = this.configService.get<string>('ALCHEMY_API_KEY');
     const rpcEndpoint = this.configService.get<string>('ALCHEMY_END_POINT');
     this.publicClient = createPublicClient({
@@ -177,31 +187,33 @@ export class BallotService {
   }
 
   async getWinningProposal() {
-    const [winningProposalId, hasTie] = (await this.publicClient.readContract({
-      address: this.getContractAddress(),
-      abi: ballotJson.abi,
-      functionName: 'winningProposal',
-    })) as [number, boolean];
+    // Get all proposals first
+    const proposals = await this.getProposals();
+
+    // Find the winning proposal by comparing BigInt vote counts
+    let winningProposalId = 0;
+    let maxVotes = BigInt(0);
+    let hasTie = false;
+
+    proposals.forEach((proposal, index) => {
+      const currentVotes = BigInt(proposal.voteCount);
+      if (currentVotes > maxVotes) {
+        maxVotes = currentVotes;
+        winningProposalId = index;
+        hasTie = false;
+      } else if (currentVotes === maxVotes && currentVotes > 0) {
+        hasTie = true;
+      }
+    });
 
     if (hasTie) {
       return { result: 'There is currently a tie' };
     }
 
-    const winningProposal = await this.publicClient.readContract({
-      address: this.getContractAddress(),
-      abi: ballotJson.abi,
-      functionName: 'proposals',
-      args: [winningProposalId],
-    });
-
-    const name = Buffer.from(winningProposal[0].slice(2), 'hex')
-      .toString('utf8')
-      .replace(/\0/g, '');
-
     return {
       proposalId: winningProposalId,
-      name: name,
-      voteCount: winningProposal[1].toString(),
+      name: proposals[winningProposalId].name,
+      voteCount: proposals[winningProposalId].voteCount,
     };
   }
 
@@ -215,15 +227,12 @@ export class BallotService {
   }
 
   async getVotingPower(address: string): Promise<string> {
-    address = `0xe6DdDcbb2848983D9cAaB715611849E579759CB0` as Address;
-    console.log(`Checking voting power for address: ${address}`);
     const votingPower = await this.publicClient.readContract({
       address: this.getContractAddress(),
       abi: ballotJson.abi,
       functionName: 'getVotingPower',
       args: [address as Address],
     });
-    console.log(`Raw voting power result: ${votingPower}`);
     return votingPower.toString();
   }
 
@@ -248,11 +257,29 @@ export class BallotService {
         throw new Error('Invalid unit specified');
     }
 
-    return await this.walletClient.writeContract({
+    const tx = await this.walletClient.writeContract({
       address: this.getContractAddress(),
       abi: ballotJson.abi,
       functionName: 'vote',
       args: [proposalId, parsedAmount],
+    });
+
+    // Store the vote record in SQLite
+    await this.voteRecordRepository.save({
+      voter: this.walletClient.account.address,
+      proposalId,
+      amount: parsedAmount.toString(),
+      transactionHash: tx,
+      timestamp: new Date(),
+    });
+
+    return tx;
+  }
+
+  async getRecentVotes(): Promise<VoteRecord[]> {
+    return this.voteRecordRepository.find({
+      order: { timestamp: 'DESC' },
+      take: 100,
     });
   }
 

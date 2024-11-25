@@ -103,4 +103,9 @@ export class BallotController {
   async getVotingHistory(@Param('address') address: string) {
     return await this.appService.getVotingHistory(address);
   }
+
+  @Get('ballot/recent-votes')
+  async getRecentVotes() {
+    return await this.appService.getRecentVotes();
+  }
 }

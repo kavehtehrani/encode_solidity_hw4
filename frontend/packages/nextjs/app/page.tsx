@@ -6,6 +6,7 @@ import { BallotAddressFromApi } from "~~/components/BallotAddressFromApi";
 import { ConnectionInfo } from "~~/components/ConnectionInfo";
 import { MintTokens } from "~~/components/MintTokens";
 import { ProposalList } from "~~/components/ProposalList";
+import { RecentVotes } from "~~/components/RecentVotes";
 import { TokenAddressFromApi } from "~~/components/TokenAddressFromApi";
 import { TokenInfo } from "~~/components/TokenInfo";
 import { VotingPower } from "~~/components/VotingPower";
@@ -27,6 +28,8 @@ const Home: NextPage = () => {
             {(tokenAddress: string) => <TokenInfo address={tokenAddress}></TokenInfo>}
           </TokenAddressFromApi>
           <MintTokens address={address as `0x${string}`}></MintTokens>
+          <hr className="mt-12"></hr>
+          <RecentVotes />
         </div>
       );
     if (isConnecting)

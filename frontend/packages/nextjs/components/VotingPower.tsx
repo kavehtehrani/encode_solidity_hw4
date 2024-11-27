@@ -1,22 +1,26 @@
 import { useEffect, useState } from "react";
 import { formatEther } from "viem";
 
+interface Vote {
+  proposalName: string;
+  proposalId: number;
+  voteCount: string;
+}
+
+interface VotingHistoryData {
+  voter: string;
+  votePowerSpent: string;
+  remainingVotePower: string;
+  votes: Vote[];
+}
+
 interface VotingPowerProps {
   address: `0x${string}`;
 }
 
 export function VotingPower({ address }: VotingPowerProps) {
   const [totalPower, setTotalPower] = useState<string>();
-  const [votingHistory, setVotingHistory] = useState<{
-    voter: string;
-    votePowerSpent: string;
-    remainingVotePower: string;
-    votes: Array<{
-      proposalName: string;
-      proposalId: number;
-      voteCount: string;
-    }>;
-  }>();
+  const [votingHistory, setVotingHistory] = useState<VotingHistoryData>();
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,15 +42,12 @@ export function VotingPower({ address }: VotingPowerProps) {
     fetch(`http://localhost:3001/ballot/voting-history/${address}`)
       .then(res => res.json())
       .then(data => {
-        console.log(data);
         setVotingHistory(data);
       })
       .catch(err => {
         console.error("Error fetching voting history:", err);
       });
   }, [address]);
-
-  console.log(votingHistory);
 
   if (isLoading) return <div>Loading voting power...</div>;
   if (error) return <div>Error loading voting power: {error}</div>;

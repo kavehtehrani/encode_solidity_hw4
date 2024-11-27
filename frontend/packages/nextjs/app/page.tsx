@@ -25,7 +25,7 @@ const Home: NextPage = () => {
           <VotingPower address={address as `0x${string}`}></VotingPower>
           <hr className="mt-12"></hr>
           <TokenAddressFromApi>
-            {(tokenAddress: string) => <TokenInfo address={tokenAddress}></TokenInfo>}
+            {(tokenAddress: string) => (<TokenInfo address={tokenAddress} />) as any}
           </TokenAddressFromApi>
           <MintTokens address={address as `0x${string}`}></MintTokens>
           <hr className="mt-12"></hr>

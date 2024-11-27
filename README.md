@@ -1,14 +1,12 @@
 # Encode Solidity Bootcamp
 #### HW #4
 
-🚧 This is still a work in progress 🚧
-
 ## Scope
 
 ✓ Create a voting dApp to cast votes, delegate and query results on chain\
 ✓ Request voting tokens to be minted using the API\
 ✓ (bonus) Store a list of recent votes in the backend and display that on frontend\
-🚧 (bonus) Use an oracle to fetch off-chain data\
+🚧 (bonus-work in progress) Use an oracle to fetch off-chain data\
 &nbsp;&nbsp;&nbsp;&nbsp; Use an oracle to fetch information from a data source of your preference\
 &nbsp;&nbsp;&nbsp;&nbsp;Use the data fetched to create the proposals in the constructor of the ballot
 
@@ -30,6 +28,7 @@ Voting dApp integration guidelines
 
 ![frontend](./images/frontend_1.png)
 ![frontend](./images/frontend_2.png)
+![frontend](./images/frontend_3.png)
 
 ## Backend
 

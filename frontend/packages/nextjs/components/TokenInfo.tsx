@@ -6,7 +6,11 @@ type TokenInfoData = {
   totalSupply: string;
 };
 
-export function TokenInfo() {
+interface TokenInfoProps {
+  address: string;
+}
+
+export const TokenInfo: React.FC<TokenInfoProps> = ({ address }) => {
   const [tokenInfo, setTokenInfo] = useState<TokenInfoData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +59,8 @@ export function TokenInfo() {
       <h2 className="text-2xl font-bold mb-4">Token Information</h2>
       <div className="space-y-2">
         <div>
-          <span className="font-semibold">Token Name:</span> <span className="font-mono">{tokenInfo?.tokenName}</span>
+          <span className="font-semibold">Token Name:</span>
+          <code className="bg-base-300 px-2 py-1 rounded text-sm">{tokenInfo?.tokenName}</code>
         </div>
         <div>
           <span className="font-semibold">Contract Address:</span>{" "}
@@ -63,9 +68,9 @@ export function TokenInfo() {
         </div>
         <div>
           <span className="font-semibold">Total Supply:</span>{" "}
-          <span className="font-mono">{tokenInfo?.totalSupply}</span>
+          <code className="bg-base-300 px-2 py-1 rounded text-sm">{tokenInfo?.totalSupply}</code>
         </div>
       </div>
     </div>
   );
-}
+};

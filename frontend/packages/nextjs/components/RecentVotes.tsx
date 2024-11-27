@@ -40,7 +40,7 @@ export const RecentVotes = () => {
 
   return (
     <div className="mt-8">
-      <h2 className="text-2xl font-bold mb-4">Recent Votes</h2>
+      <h2 className="text-2xl font-bold mb-4">Recent Votes (via API only)</h2>
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
           <thead className="bg-gray-100 dark:bg-gray-700">

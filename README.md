@@ -36,4 +36,6 @@ Voting dApp integration guidelines
 
 ## Note
 
-I have made some extra functionality to sign directly on-chain from user's wallet without storing private keys in the .env file.  
+I have made some extra functionality to sign directly on-chain from user's wallet without storing private keys in the `.env` file.  
+
+Make sure you have a .env file that includes your RPC endpoints and private key on the server side.
